@@ -388,8 +388,8 @@ def res2next_dla60(pretrained=None, **kwargs):
     return model
 
 
-if __name__ == '__main__':
-    images = torch.rand(1, 3, 224, 224).cuda(0)
-    model = res2next_dla60(pretrained=True)
-    model = model.cuda(0)
-    print(model(images).size())
+# if __name__ == '__main__':
+#     images = torch.rand(1, 3, 224, 224).cuda(0)
+#     model = res2next_dla60(pretrained=True)
+#     model = model.cuda(0)
+#     print(model(images).size())

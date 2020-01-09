@@ -173,8 +173,8 @@ def res2next50(pretrained=False, **kwargs):
         model.load_state_dict(model_zoo.load_url(model_urls['res2next50']))
     return model
 
-if __name__ == '__main__':
-    images = torch.rand(1, 3, 224, 224).cuda(0)
-    model = res2next50(pretrained=True)
-    model = model.cuda(0)
-    print(model(images).size())
+# if __name__ == '__main__':
+#     images = torch.rand(1, 3, 224, 224).cuda(0)
+#     model = res2next50(pretrained=True)
+#     model = model.cuda(0)
+#     print(model(images).size())

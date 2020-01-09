@@ -1,7 +1,11 @@
 # happen-pt
 > pytorch learning~
 
-## pt-basis
-> test pytorch basic use
+## pt_basis
+> test pytorch basic
 
-## awesome-pt-network
+## awesome_backbone
+> some awesome network backbone
+
+* res2net: `res2net_dla`、`res2net`、`res2next`
+* efficientnet: `efficientnet-[b0,b1,b2,b3,b4,b5.b6.b7]`

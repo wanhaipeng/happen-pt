@@ -4,8 +4,6 @@ import math
 import torch.utils.model_zoo as model_zoo
 import torch
 import torch.nn.functional as F
-from torchsummaryX import summary
-from tensorboardX import SummaryWriter
 __all__ = ['Res2Net', 'res2net50']
 
 
@@ -38,7 +36,7 @@ class Bottle2neck(nn.Module):
         width = int(math.floor(planes * (baseWidth/64.0)))
         self.conv1 = nn.Conv2d(inplanes, width*scale, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(width*scale)
-
+        
         if scale == 1:
           self.nums = 1
         else:
@@ -232,12 +230,10 @@ def res2net50_14w_8s(pretrained=False, **kwargs):
 
 
 
-if __name__ == '__main__':
-    images = torch.rand(1, 3, 224, 224).cuda(0)
-    # model = res2net101_26w_4s(pretrained=True)
-    model = res2net50_26w_4s(pretrained=True)
-    model = model.cuda(0)
-    print(summary(model, images))
-    print(model(images).cpu().detach().numpy().shape)
-    with SummaryWriter(logdir="./res2net_graph", comment='res2net') as w:
-        w.add_graph(model, (images,))
+# if __name__ == '__main__':
+#     images = torch.rand(1, 3, 224, 224).cuda(0)
+#     # model = res2net101_26w_4s(pretrained=True)
+#     model = res2net50_26w_4s(pretrained=True)
+#     model = model.cuda(0)
+#     print(model)
+#     print(model(images).cpu().detach().numpy().shape)

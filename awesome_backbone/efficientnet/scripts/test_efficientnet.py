@@ -1,4 +1,4 @@
-""" test res2net accuracy in imagenet-val.
+""" test efficientnet accuracy in imagenet-val.
 """
 
 import os
@@ -10,9 +10,8 @@ import tqdm
 import argparse
 import numpy as np
 from PIL import Image
-from net.res2net import *
-from net.dla import *
-from net.res2next import *
+sys.path.append('..')
+from net import EfficientNet
 
 def eval_classify(net, preprocessor):
   """ do classification evaluation
@@ -42,53 +41,55 @@ def eval_classify(net, preprocessor):
                        for i in list(ids)]
       img = Image.open(img_path_list[0]).convert("RGB")
       input_data = preprocessor(img).unsqueeze(0).cuda(device=0)
-      output_data = net(input_data).cpu().detach().numpy()
-      result = [i for i in np.argsort(-output_data)[:,:5].tolist()]
+      with torch.no_grad():
+        # output_data = net(input_data).cpu().detach().numpy()
+        output = net(input_data)
+      # result = [i for i in np.argsort(-output_data)[:,:5].tolist()]
+      result = [torch.topk(output, k=5).indices.squeeze(0).tolist()]
       resultStr = [' '.join(map(str, i)) for i in result]
       resultList += resultStr
     f.write('\n'.join(resultList))
 
 
-def make_res2net():
-  """ Constructs a res2net.
+def make_efficientnet():
+  """ Constructs a efficientnet.
 
-  res2net50
-  res2net101_26w_4s
+  efficientnet-b0
+  efficientnet-b1
+  efficientnet-b2
+  efficientnet-b3
+  efficientnet-b4
+  efficientnet-b5
+  efficientnet-b6
+  efficientnet-b7
   """
   print("Construct {}".format(args.name))
-  if args.name == "res2net50":
-    model = res2net50(pretrained=False)
-    pretrained_net = torch.load("./res2net50.pth")
-    print("check res2net50 pretrained_net: {}".format(type(pretrained_net)))
-    model.load_state_dict(pretrained_net)
-    return model
-  elif args.name == "res2next_dla60":
-    model = res2next_dla60(pretrained=False)
-    pretrained_net = torch.load("./res2next_dla60.pth")
-    print("check res2next_dla60 pretrained_net: {}".format(type(pretrained_net)))
-    model.load_state_dict(pretrained_net)
-    return model
-  elif args.name == "res2next50":
-    model = res2next50(pretrained=False)
-    pretrained_net = torch.load("./res2next50.pth")
-    print("check res2next50 pretrained_net: {}".format(type(pretrained_net)))
-    model.load_state_dict(pretrained_net)
+  model_group = ['efficientnet-b0', 'efficientnet-b1',
+                 'efficientnet-b2', 'efficientnet-b3',
+                 'efficientnet-b4', 'efficientnet-b5',
+                 'efficientnet-b6', 'efficientnet-b7']
+  if args.name in model_group:
+    model = EfficientNet.from_pretrained(args.name)
     return model
   else:
     raise ValueError("Not a valid name: {}!".format(args.name))
 
-def make_preprocessor(process_type = 'cls'):
+def make_preprocessor(input_size, process_type = 'cls'):
   """ Constructs a preprocessor
 
-  cls
-  det
+  Parameters
+  ----------
+  input_size : int
+    network input resolution
+  process_type : str
+    network type
   """
   if process_type == "cls":
     normalize = torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                  std=[0.229, 0.224, 0.225])
     processor = torchvision.transforms.Compose([
-      torchvision.transforms.Resize(256),
-      torchvision.transforms.CenterCrop(224),
+      torchvision.transforms.Resize(input_size),
+      torchvision.transforms.CenterCrop(input_size),
       torchvision.transforms.ToTensor(),
       normalize,])
     return processor
@@ -96,13 +97,15 @@ def make_preprocessor(process_type = 'cls'):
     raise ValueError("Not a valid type: {}".format(process_type))
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description="test res2net accuracy")
-  parser.add_argument('-n', '--name', help='network name.', default="")
+  parser = argparse.ArgumentParser(description="test efficientnet accuracy")
+  parser.add_argument('-n', '--name', help='network name', required=True, default="")
   parser.add_argument('-m', '--mode', help='run mode', default="test")
   args = parser.parse_args()
   if args.mode == "test":
-    net = make_res2net().cuda(device=0).eval()
-    preprocessor = make_preprocessor()
+    net = make_efficientnet().cuda(device=0).eval()
+    input_size = EfficientNet.get_image_size(args.name)
+    print("\033[32m" + "input resolution: {}".format(input_size) + "\33[0m")
+    preprocessor = make_preprocessor(input_size)
     # do classification
     eval_cls_begin = time.time()
     eval_classify(net, preprocessor)
@@ -111,9 +114,9 @@ if __name__ == '__main__':
     print("evaluation cost time: - {:.6f}".format(eval_cls_end - eval_cls_begin))
     print("\033[32m" + 40*"#" + "\033[0m")
   elif args.mode == "eval":
-    with open("/xxxxxxx/imagenet-val/ground_truth.txt",'r') as f:
+    with open("/home/haipeng.wan/work/evaluation/data/imagenet-val/ground_truth.txt",'r') as f:
       groundtruth = f.readlines()
-    with open("./result/{}.txt".format(args.name), 'r') as f:
+    with open("../result/{}.txt".format(args.name), 'r') as f:
       result = f.readlines()
     top1, top5 = 0, 0
     for i in range(50000):
